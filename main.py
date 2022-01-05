@@ -51,3 +51,8 @@ class db:
         """Drop the table"""
         self.c.execute(f"DROP TABLE {self.table}")
         self.conn.commit()
+
+    def clear(self):
+        """Clears all the data from the table"""
+        self.c.execute(f"DELETE FROM {self.table}")
+        self.conn.commit()
