@@ -1,12 +1,13 @@
+from random import choice, randint
 class db:
-    def __init__(self,database,table):
+    def __init__(self, database:str, table:str):
         import sqlite3 #import the module
         self.conn = sqlite3.connect(database,check_same_thread=False) # conn is connected to the database file
         self.c = self.conn.cursor()
         self.database = database #add the file to be changed to self
         self.table = table #add the table you are looking at to self
     
-    def setup(self,*args):
+    def setup(self,*args: str):
         """Set up a table if it does not exist with a column for each argument passed in
         """
         self.to_write = f"CREATE TABLE IF NOT EXISTS {self.table} (" #if the table does not exist already
@@ -56,3 +57,42 @@ class db:
         """Clears all the data from the table"""
         self.c.execute(f"DELETE FROM {self.table}")
         self.conn.commit()
+
+    def select(self, conditions:list, columns:list):
+        """ Returns an array of all the matches from the array where conditions are met
+        the conditions array is for the conditions and the columns array is of the column numbers with 1 being the first column
+        """
+        self.to_execute = f"SELECT * FROM {self.table} WHERE "
+        
+        len_args = min(len(conditions), len(columns)) # get the minimum length of the arrays, this should stop uneven arrays from breaking the code
+        for condition in range(len_args):
+            if str(columns[condition]).isdigit(): # check to see if the column is a digit
+                current_column = self.columns()[int(columns[condition])-1]
+                current_condition = conditions[condition].replace('"',"'")
+                self.to_execute += f'\"{current_column}\" = \"{current_condition}\"' # replace the " with ' in the inputs to stop "'s breaking the code when entered
+                if not condition > len_args-2: # as longs as it is not the last condition
+                    self.to_execute += f" AND " # add an AND statement to join the conditions together
+        self.c.execute(self.to_execute)
+        self.conn.commit()
+        return self.c.fetchall()
+    
+    def update(self, ):
+        pass
+    
+    def remove(self, conditions:list, columns:list):
+        """ Remove from the database where conditions are met
+        the conditions array is for the conditions and the columns array is of the column numbers with 1 being the first column
+        """
+        self.to_execute = f"DELETE FROM {self.table} WHERE "
+        
+        len_args = min(len(conditions), len(columns)) # get the minimum length of the arrays, this should stop uneven arrays from breaking the code
+        for condition in range(len_args):
+            if str(columns[condition]).isdigit(): # check to see if the column is a digit
+                current_column = self.columns()[int(columns[condition])-1]
+                current_condition = conditions[condition].replace('"',"'")
+                self.to_execute += f'\"{current_column}\" = \"{current_condition}\"' # replace the " with ' in the inputs to stop "'s breaking the code when entered
+                if not condition > len_args-2: # as longs as it is not the last condition
+                    self.to_execute += f" AND " # add an AND statement to join the conditions together
+        self.c.execute(self.to_execute)
+        self.conn.commit()
+        return (self.to_execute, self.c.fetchall())
