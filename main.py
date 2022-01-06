@@ -20,7 +20,7 @@ class db:
         self.conn.commit() #commit the changes to the file
 
     def read(self):
-        "Return an array of all the rows in the table"
+        "Return an array of all the data in the table"
         self.c.execute(f"SELECT * FROM {self.table}")
         self.conn.commit()
         self.lines = self.c.fetchall()
@@ -76,8 +76,31 @@ class db:
         self.conn.commit()
         return self.c.fetchall()
     
-    def update(self, ):
-        pass
+    def update(self, conditions: list, columns: list, update: list, update_columns: list):
+        """Update Values where matches occur in the table."""
+        self.to_execute = f"UPDATE {self.table} "
+        self.to_execute += f"SET  "
+        len_args = min(len(update), len(update_columns)) # get the minimum length of the arrays, this should stop uneven arrays from breaking the code
+        for condition in range(len_args):
+            if str(update_columns[condition]).isdigit(): # check to see if the column is a digit
+                current_column = self.columns()[int(update_columns[condition])-1]
+                current_condition = update[condition].replace('"',"'")
+                self.to_execute += f'\"{current_column}\" = \"{current_condition}\"' # replace the " with ' in the inputs to stop "'s breaking the code when entered
+                if not condition > len_args-2: # as longs as it is not the last condition
+                    self.to_execute += f" , " # add an AND statement to join the conditions together
+        
+        self.to_execute += " WHERE "
+
+        len_args = min(len(conditions), len(columns)) # get the minimum length of the arrays, this should stop uneven arrays from breaking the code
+        for condition in range(len_args):
+            if str(columns[condition]).isdigit(): # check to see if the column is a digit
+                current_column = self.columns()[int(columns[condition])-1]
+                current_condition = conditions[condition].replace('"',"'")
+                self.to_execute += f'\"{current_column}\" = \"{current_condition}\"' # replace the " with ' in the inputs to stop "'s breaking the code when entered
+                if not condition > len_args-2: # as longs as it is not the last condition
+                    self.to_execute += f" AND " # add an AND statement to join the conditions together
+        self.c.execute(self.to_execute)
+        self.conn.commit()
     
     def remove(self, conditions:list, columns:list):
         """ Remove from the database where conditions are met
